@@ -202,7 +202,5 @@ Responsive usability is one of the stated requirements of the exercise.
 - Tailwind CSS
 - JavaScript
 - Lucide React
-- [Add charting library here, if used]
-
 ---
 
