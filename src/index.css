@@ -1,0 +1,76 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap');
+@import "tailwindcss";
+
+/* ─── Design tokens ─────────────────────────────────────────── */
+@theme {
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'Plus Jakarta Sans', system-ui, sans-serif;
+
+  /* Sidebar */
+  --sidebar-expanded: 16rem;   /* 256px */
+  --sidebar-collapsed: 4rem;   /* 64px  */
+  --header-height: 4rem;       /* 64px  */
+
+  /* Brand palette */
+  --color-brand-50:  #f0f9ff;
+  --color-brand-100: #e0f2fe;
+  --color-brand-500: #0ea5e9;
+  --color-brand-600: #0284c7;
+  --color-brand-700: #0369a1;
+}
+
+/* ─── Base ───────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { height: 100%; }
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  background-color: #f8fafc;
+  color: #0f172a;
+  min-height: 100%;
+  margin: 0;
+}
+#root { height: 100vh; display: flex; flex-direction: column; }
+
+/* ─── Custom scrollbar ───────────────────────────────────────── */
+::-webkit-scrollbar        { width: 5px; height: 5px; }
+::-webkit-scrollbar-track  { background: #f1f5f9; }
+::-webkit-scrollbar-thumb  { background: #cbd5e1; border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* ─── Sidebar transition ─────────────────────────────────────── */
+.sidebar-enter  { transition: width 0.28s cubic-bezier(0.4, 0, 0.2, 1); }
+.sidebar-text   { transition: opacity 0.18s ease, width 0.18s ease; }
+.sidebar-hidden { opacity: 0; width: 0; overflow: hidden; pointer-events: none; }
+
+/* ─── Calendar drawer ────────────────────────────────────────── */
+.drawer-slide {
+  transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.drawer-overlay {
+  transition: opacity 0.25s ease;
+}
+
+/* ─── Vertical tab text ──────────────────────────────────────── */
+.vertical-text {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+}
+
+/* ─── Chart hover dots ───────────────────────────────────────── */
+.chart-dot { transition: r 0.15s ease; cursor: pointer; }
+.chart-dot:hover { r: 6; }
+
+/* ─── Metric display font ────────────────────────────────────── */
+.font-metric {
+  font-family: var(--font-display);
+  font-feature-settings: "tnum";
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Donut chart ────────────────────────────────────────────── */
+.donut-ring {
+  transition: stroke-dashoffset 0.6s cubic-bezier(0.4,0,0.2,1);
+}
