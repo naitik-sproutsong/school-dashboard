@@ -1,15 +1,14 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap');
 @import "tailwindcss";
 
 /* ─── Design tokens ─────────────────────────────────────────── */
 @theme {
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-display: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-sans: 'Nunito Sans', system-ui, -apple-system, sans-serif;
+  --font-display: 'Nunito Sans', system-ui, -apple-system, sans-serif;
 
   /* Sidebar */
   --sidebar-expanded: 16rem;   /* 256px */
-  --sidebar-collapsed: 4rem;   /* 64px  */
-  --header-height: 4rem;       /* 64px  */
+  --sidebar-collapsed: 4.5rem; /* 72px  */
+  --header-height: 4.5rem;     /* 72px  */
 
   /* Brand palette */
   --color-brand-50:  #f0f9ff;
@@ -17,6 +16,9 @@
   --color-brand-500: #0ea5e9;
   --color-brand-600: #0284c7;
   --color-brand-700: #0369a1;
+
+  /* Reference Warm Background */
+  --color-page-bg: #f8f6f0;
 }
 
 /* ─── Base ───────────────────────────────────────────────────── */
@@ -26,21 +28,21 @@ html { height: 100%; }
 body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
-  background-color: #f8fafc;
-  color: #0f172a;
+  background-color: #f7f5ee;
+  color: #111827;
   min-height: 100%;
   margin: 0;
 }
 #root { height: 100vh; display: flex; flex-direction: column; }
 
 /* ─── Custom scrollbar ───────────────────────────────────────── */
-::-webkit-scrollbar        { width: 5px; height: 5px; }
-::-webkit-scrollbar-track  { background: #f1f5f9; }
+::-webkit-scrollbar        { width: 6px; height: 6px; }
+::-webkit-scrollbar-track  { background: transparent; }
 ::-webkit-scrollbar-thumb  { background: #cbd5e1; border-radius: 9999px; }
 ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
 /* ─── Sidebar transition ─────────────────────────────────────── */
-.sidebar-enter  { transition: width 0.28s cubic-bezier(0.4, 0, 0.2, 1); }
+.sidebar-enter  { transition: width 0.24s cubic-bezier(0.4, 0, 0.2, 1); }
 .sidebar-text   { transition: opacity 0.18s ease, width 0.18s ease; }
 .sidebar-hidden { opacity: 0; width: 0; overflow: hidden; pointer-events: none; }
 
@@ -72,5 +74,5 @@ body {
 
 /* ─── Donut chart ────────────────────────────────────────────── */
 .donut-ring {
-  transition: stroke-dashoffset 0.6s cubic-bezier(0.4,0,0.2,1);
+  transition: stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }

@@ -1,97 +1,137 @@
 import { FEES } from '../../data/schoolData';
 
-// SVG donut: r=42, circumference = 2π*42 ≈ 263.9
-const R = 42;
-const CIRC = 2 * Math.PI * R;
-
-function DonutChart({ pct }: { pct: number }) {
-  const collected = (pct / 100) * CIRC;
-  const pending = CIRC - collected;
-
-  return (
-    <div className="relative flex items-center justify-center" style={{ width: 148, height: 148 }}>
-      <svg
-        viewBox="0 0 100 100"
-        className="w-full h-full"
-        style={{ transform: 'rotate(-90deg)' }}
-        aria-label={`Fee collection: ${pct}% collected`}
-      >
-        {/* Track */}
-        <circle cx="50" cy="50" r={R} fill="transparent" stroke="#f1f5f9" strokeWidth="13" />
-        {/* Pending arc (amber) */}
-        <circle
-          cx="50" cy="50" r={R}
-          fill="transparent"
-          stroke="#f59e0b"
-          strokeWidth="13"
-          strokeDasharray={`${pending} ${CIRC}`}
-          strokeDashoffset={-collected}
-          strokeLinecap="round"
-          className="donut-ring"
-        />
-        {/* Collected arc (teal) */}
-        <circle
-          cx="50" cy="50" r={R}
-          fill="transparent"
-          stroke="#0d9488"
-          strokeWidth="13"
-          strokeDasharray={`${collected} ${CIRC}`}
-          strokeDashoffset={0}
-          strokeLinecap="round"
-          className="donut-ring"
-        />
-      </svg>
-      {/* Center label */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-        <span className="text-2xl font-bold text-slate-800 font-metric leading-none">{pct}%</span>
-        <span className="text-[9px] font-semibold uppercase tracking-widest text-slate-400 mt-0.5">Realized</span>
-      </div>
-    </div>
-  );
-}
+const R = 40;
+const CIRC = 2 * Math.PI * R; // ≈ 251.327
 
 export default function FeeSection() {
+  // Percentages: Collected (68%), Pending (22%), Overdue (10%)
+  const pCollected = FEES.collectedPct;
+  const pPending = FEES.pendingPct;
+  const pOverdue = FEES.overduePct;
+
+  // Tiny gap for rounded aesthetics
+  const gap = 2; // in percent
+  const arcCollected = Math.max(0, ((pCollected - gap) / 100) * CIRC);
+  const arcPending = Math.max(0, ((pPending - gap) / 100) * CIRC);
+  const arcOverdue = Math.max(0, ((pOverdue - gap) / 100) * CIRC);
+
+  // Dash offsets
+  // Rotated -90deg so 0 is at top
+  const offsetCollected = 0;
+  const offsetPending = -((pCollected / 100) * CIRC);
+  const offsetOverdue = -(((pCollected + pPending) / 100) * CIRC);
+
   return (
-    <section className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5">
+    <section className="bg-white rounded-[22px] p-6 border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col justify-between">
       {/* Header */}
-      <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-        <div className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-teal-500" />
-          <h2 className="font-bold text-sm text-slate-900">Fee Collection</h2>
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h2 className="text-lg font-bold text-slate-900 font-sans tracking-tight">Fee collection</h2>
+          <p className="text-xs text-slate-400 mt-0.5">{FEES.cycle} · Academic Intake</p>
         </div>
-        <span className="text-[10px] bg-emerald-50 text-emerald-700 font-semibold px-2 py-0.5 rounded-full">{FEES.cycle}</span>
+        <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700">
+          {pCollected}% Collected
+        </span>
       </div>
 
-      {/* Donut + stats — chart takes centre stage */}
-      <div className="flex items-center gap-5 mt-4">
-        {/* Donut — prominent */}
-        <div className="flex-shrink-0">
-          <DonutChart pct={FEES.collectionRate} />
+      {/* Donut Chart Container matching Reference 1 */}
+      <div className="py-2 flex flex-col items-center justify-center">
+        <div className="relative flex items-center justify-center" style={{ width: 170, height: 170 }}>
+          <svg
+            viewBox="0 0 100 100"
+            className="w-full h-full transform -rotate-90 overflow-visible"
+            aria-label={`Fee collection: ${pCollected}% collected, ${pPending}% pending, ${pOverdue}% overdue`}
+          >
+            {/* Background Track */}
+            <circle
+              cx="50"
+              cy="50"
+              r={R}
+              fill="transparent"
+              stroke="#F1F5F9"
+              strokeWidth="12"
+            />
+
+            {/* Collected Segment (Green) */}
+            <circle
+              cx="50"
+              cy="50"
+              r={R}
+              fill="transparent"
+              stroke="#34D399"
+              strokeWidth="12"
+              strokeDasharray={`${arcCollected} ${CIRC}`}
+              strokeDashoffset={offsetCollected}
+              strokeLinecap="round"
+              className="donut-ring"
+            />
+
+            {/* Pending Segment (Amber) */}
+            <circle
+              cx="50"
+              cy="50"
+              r={R}
+              fill="transparent"
+              stroke="#FBBF24"
+              strokeWidth="12"
+              strokeDasharray={`${arcPending} ${CIRC}`}
+              strokeDashoffset={offsetPending}
+              strokeLinecap="round"
+              className="donut-ring"
+            />
+
+            {/* Overdue Segment (Rose) */}
+            <circle
+              cx="50"
+              cy="50"
+              r={R}
+              fill="transparent"
+              stroke="#F43F5E"
+              strokeWidth="12"
+              strokeDasharray={`${arcOverdue} ${CIRC}`}
+              strokeDashoffset={offsetOverdue}
+              strokeLinecap="round"
+              className="donut-ring"
+            />
+          </svg>
+
+          {/* Center Text per Reference 1 */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center select-none">
+            <span className="text-2xl font-extrabold text-slate-900 tracking-tight font-sans">
+              ₹{FEES.collected}
+            </span>
+            <span className="text-xs font-semibold text-slate-400 mt-0.5">
+              of ₹{FEES.totalTarget}
+            </span>
+          </div>
         </div>
 
-        {/* Metric blocks */}
-        <div className="flex-1 space-y-2.5">
-          <div className="p-3 rounded-xl bg-teal-50/70 border border-teal-100 flex justify-between items-center">
-            <div>
-              <span className="text-[10px] font-semibold text-teal-700 block">Collected</span>
-              <span className="text-lg font-bold text-teal-900 font-metric">₹{FEES.collected}</span>
-            </div>
-            <span className="text-xs font-bold text-teal-600">{FEES.collectionRate}%</span>
+        {/* Legend Row matching Reference 1 */}
+        <div className="mt-5 flex items-center justify-center gap-5 sm:gap-6 text-xs select-none">
+          <div className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#34D399]" />
+            <span className="text-slate-600 font-bold">Collected</span>
+            <span className="text-slate-800 font-extrabold">{pCollected}%</span>
           </div>
-          <div className="p-3 rounded-xl bg-amber-50/70 border border-amber-100 flex justify-between items-center">
-            <div>
-              <span className="text-[10px] font-semibold text-amber-700 block">Pending</span>
-              <span className="text-lg font-bold text-amber-900 font-metric">₹{FEES.pending}</span>
-            </div>
-            <span className="text-xs font-bold text-amber-600">{FEES.pendingRate}%</span>
+          <div className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#FBBF24]" />
+            <span className="text-slate-600 font-bold">Pending</span>
+            <span className="text-slate-800 font-extrabold">{pPending}%</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#F43F5E]" />
+            <span className="text-slate-600 font-bold">Overdue</span>
+            <span className="text-slate-800 font-extrabold">{pOverdue}%</span>
           </div>
         </div>
       </div>
 
       {/* Footer */}
-      <div className="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center text-xs text-slate-500">
-        <span>Target: <strong className="text-slate-700">₹{FEES.target}</strong></span>
-        <a href="#fees" className="text-teal-600 font-semibold hover:underline text-[11px]">Reconcile →</a>
+      <div className="mt-4 pt-3.5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+        <span>Cycle: <strong className="text-slate-700">Autumn Term 2026</strong></span>
+        <a href="#fees" className="text-blue-600 hover:text-blue-700 font-bold text-xs">
+          View more →
+        </a>
       </div>
     </section>
   );

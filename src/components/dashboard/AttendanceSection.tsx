@@ -1,16 +1,23 @@
 import { useState } from 'react';
-import { ATTENDANCE_TRENDS } from '../../data/schoolData';
+import { 
+  ATTENDANCE_WEEKLY, 
+  ATTENDANCE_MONTHLY,
+  ATTENDANCE_3MONTHS,
+  ATTENDANCE_6MONTHS,
+  ATTENDANCE_1YEAR
+} from '../../data/schoolData';
+import { ChevronDown } from 'lucide-react';
 
-// Map data values (90–98 range) to SVG Y coordinates (chart area: y=20..160)
-function valueToY(v: number, min = 90, max = 98, yTop = 15, yBot = 155): number {
-  return yBot - ((v - min) / (max - min)) * (yBot - yTop);
+// Map 70–100 data values to SVG coordinates (viewBox 0 0 600 200, chart area: y=25..165)
+function valToY(v: number, min = 70, max = 100, top = 25, bottom = 165): number {
+  const clamped = Math.max(min, Math.min(max, v));
+  return bottom - ((clamped - min) / (max - min)) * (bottom - top);
 }
 
-const CHART_X = [60, 148, 236, 324, 412, 500];
-
-function buildPath(values: number[]): string {
-  const pts = values.map((v, i) => [CHART_X[i], valueToY(v)] as [number, number]);
-  // Smooth curve via cubic bezier
+// Generate smooth cubic bezier SVG path
+function buildSpline(xCoords: number[], values: number[]): string {
+  if (values.length === 0) return '';
+  const pts = values.map((v, i) => [xCoords[i], valToY(v)] as [number, number]);
   let d = `M ${pts[0][0]} ${pts[0][1]}`;
   for (let i = 1; i < pts.length; i++) {
     const [px, py] = pts[i - 1];
@@ -22,194 +29,253 @@ function buildPath(values: number[]): string {
   return d;
 }
 
-function buildAreaPath(values: number[]): string {
-  const line = buildPath(values);
-  const lastX = CHART_X[values.length - 1];
-  const firstX = CHART_X[0];
-  return `${line} L ${lastX} 160 L ${firstX} 160 Z`;
+function buildAreaSpline(xCoords: number[], values: number[]): string {
+  const line = buildSpline(xCoords, values);
+  const lastX = xCoords[values.length - 1];
+  const firstX = xCoords[0];
+  return `${line} L ${lastX} 175 L ${firstX} 175 Z`;
 }
 
 export default function AttendanceSection() {
-  const [cohort, setCohort] = useState<'students' | 'staff'>('students');
-  const data = ATTENDANCE_TRENDS[cohort];
+  const [mode, setMode] = useState<string>('1 Month');
+  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
 
-  const accentColor = cohort === 'students' ? '#0284c7' : '#059669';
-  const accentLight = cohort === 'students' ? '#bae6fd' : '#a7f3d0';
-  const gradientId = cohort === 'students' ? 'attGradBlue' : 'attGradGreen';
+  let data: any;
+  switch (mode) {
+    case '1 Week': data = ATTENDANCE_WEEKLY; break;
+    case '1 Month': data = ATTENDANCE_MONTHLY; break;
+    case '3 Months': data = ATTENDANCE_3MONTHS; break;
+    case '6 Months': data = ATTENDANCE_6MONTHS; break;
+    case '1 Year': data = ATTENDANCE_1YEAR; break;
+    default: data = ATTENDANCE_MONTHLY;
+  }
+
+  const labels: string[] = data.days || data.months;
+  const studentVals: number[] = data.students;
+  const staffVals: number[] = data.staff;
+
+  // Dynamically calculate X coordinates based on labels length
+  const startX = 65;
+  const endX = 555;
+  const chartX = labels.map((_, i) => {
+    if (labels.length <= 1) return startX;
+    return startX + (i * (endX - startX) / (labels.length - 1));
+  });
+
+  const yTicks = [100, 86, 78, 70];
+
+  const studentAvg = (studentVals.reduce((a, b) => a + b, 0) / studentVals.length).toFixed(1);
+  const staffAvg = (staffVals.reduce((a, b) => a + b, 0) / staffVals.length).toFixed(1);
 
   return (
-    <section className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+    <section className="bg-white rounded-[22px] p-6 border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.03)]">
       {/* Header */}
-      <div className="px-5 pt-4 pb-3 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <h2 className="font-bold text-sm text-slate-900">Attendance Trends</h2>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 font-semibold">AY 2026-27</span>
+          <h2 className="text-lg font-bold text-slate-900 font-sans tracking-tight mb-1.5">Attendance</h2>
+          
+          <div className="relative inline-flex items-center">
+            <select 
+              value={mode}
+              onChange={(e) => setMode(e.target.value)}
+              className="appearance-none bg-slate-50 border border-slate-200 text-slate-700 text-sm font-semibold rounded-lg pl-3 pr-8 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 cursor-pointer transition-colors"
+            >
+              <option value="1 Week">1 Week</option>
+              <option value="1 Month">1 Month</option>
+              <option value="3 Months">3 Months</option>
+              <option value="6 Months">6 Months</option>
+              <option value="1 Year">1 Year</option>
+            </select>
+            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
           </div>
-          <p className="text-[11px] text-slate-400 mt-0.5">6-month historical · {data.months[0]}–{data.months[5]}</p>
         </div>
-        {/* Toggle */}
-        <div className="inline-flex p-0.5 rounded-lg bg-slate-100 text-xs font-medium self-start sm:self-auto flex-shrink-0">
-          <button
-            onClick={() => setCohort('students')}
-            className={`px-3 py-1 rounded-md transition-all text-xs ${
-              cohort === 'students'
-                ? 'bg-white shadow-sm font-semibold text-slate-800'
-                : 'text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            Students
-          </button>
-          <button
-            onClick={() => setCohort('staff')}
-            className={`px-3 py-1 rounded-md transition-all text-xs ${
-              cohort === 'staff'
-                ? 'bg-white shadow-sm font-semibold text-slate-800'
-                : 'text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            Staff
-          </button>
+
+        <div className="flex items-center gap-5">
+          <div className="flex items-center gap-2 text-sm">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#F59E0B]" />
+            <span className="font-semibold text-slate-500">Staff <span className="text-slate-900 font-bold ml-1">{staffAvg}%</span></span>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#3B82F6]" />
+            <span className="font-semibold text-slate-500">Students <span className="text-slate-900 font-bold ml-1">{studentAvg}%</span></span>
+          </div>
         </div>
       </div>
 
-      {/* 3 sub-metric tiles */}
-      <div className="grid grid-cols-3 gap-3 px-5 py-3">
-        <div className="bg-sky-50/70 border border-sky-100 rounded-xl p-3">
-          <span className="text-[10px] text-sky-700 font-semibold block">Avg Rate</span>
-          <span className="text-lg font-bold text-sky-900 font-metric">{data.avgRate}</span>
-        </div>
-        <div className="bg-emerald-50/70 border border-emerald-100 rounded-xl p-3">
-          <span className="text-[10px] text-emerald-700 font-semibold block">Peak Month</span>
-          <span className="text-base font-bold text-emerald-900 font-metric truncate">{data.highestMonth}</span>
-        </div>
-        <div className="bg-amber-50/70 border border-amber-100 rounded-xl p-3">
-          <span className="text-[10px] text-amber-700 font-semibold block">Peak Day</span>
-          <span className="text-base font-bold text-amber-900 font-metric truncate">{data.peakDay}</span>
-        </div>
-      </div>
+      {/* SVG Chart Container */}
+      <div className="relative w-full h-56 sm:h-64 select-none">
+        <svg
+          viewBox="0 0 580 200"
+          className="w-full h-full overflow-visible"
+          preserveAspectRatio="none"
+        >
+          <defs>
+            {/* Amber gradient for staff */}
+            <linearGradient id="amberAreaGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#F59E0B" stopOpacity="0.25" />
+              <stop offset="85%" stopColor="#F59E0B" stopOpacity="0.04" />
+              <stop offset="100%" stopColor="#F59E0B" stopOpacity="0" />
+            </linearGradient>
 
-      {/* SVG Chart — full width, prominent */}
-      <div className="px-3 pb-4">
-        <div className="relative w-full" style={{ height: '200px' }}>
-          <svg
-            viewBox="0 0 560 175"
-            preserveAspectRatio="none"
-            className="w-full h-full"
-            aria-label={`Attendance trend chart for ${cohort}`}
-          >
-            <defs>
-              <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0%" stopColor={accentColor} stopOpacity="0.22" />
-                <stop offset="100%" stopColor={accentColor} stopOpacity="0.0" />
-              </linearGradient>
-            </defs>
+            {/* Blue gradient for students */}
+            <linearGradient id="blueAreaGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.22" />
+              <stop offset="85%" stopColor="#3B82F6" stopOpacity="0.03" />
+              <stop offset="100%" stopColor="#3B82F6" stopOpacity="0" />
+            </linearGradient>
+          </defs>
 
-            {/* Horizontal gridlines */}
-            {[15, 50, 85, 120, 155].map((y) => (
-              <line key={y} x1="50" x2="540" y1={y} y2={y}
-                stroke="#f1f5f9" strokeWidth="1" strokeDasharray="3 4" />
-            ))}
+          {/* Horizontal grid lines & Y labels */}
+          {yTicks.map((val) => {
+            const y = valToY(val);
+            return (
+              <g key={val}>
+                <line
+                  x1="50"
+                  y1={y}
+                  x2="565"
+                  y2={y}
+                  stroke="#F1F5F9"
+                  strokeWidth="1.2"
+                />
+                <text
+                  x="42"
+                  y={y + 4}
+                  textAnchor="end"
+                  fontSize="11"
+                  fontWeight="600"
+                  fill="#94A3B8"
+                  fontFamily="Nunito Sans, sans-serif"
+                >
+                  {val}
+                </text>
+              </g>
+            );
+          })}
 
-            {/* Y-axis labels */}
-            {[98, 96, 94, 92, 90].map((v, i) => (
-              <text key={v} x="44" y={[15, 50, 85, 120, 155][i] + 4}
-                textAnchor="end" fontSize="9" fill="#94a3b8" fontFamily="Inter">
-                {v}%
-              </text>
-            ))}
+          {/* Area fills */}
+          <path
+            d={buildAreaSpline(chartX, staffVals)}
+            fill="url(#amberAreaGrad)"
+          />
+          <path
+            d={buildAreaSpline(chartX, studentVals)}
+            fill="url(#blueAreaGrad)"
+          />
 
-            {/* Area fill */}
-            <path
-              d={buildAreaPath(data.values)}
-              fill={`url(#${gradientId})`}
-            />
+          {/* Smooth Line strokes */}
+          <path
+            d={buildSpline(chartX, staffVals)}
+            fill="none"
+            stroke="#F59E0B"
+            strokeWidth="3.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            d={buildSpline(chartX, studentVals)}
+            fill="none"
+            stroke="#3B82F6"
+            strokeWidth="3.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
 
-            {/* Line */}
-            <path
-              d={buildPath(data.values)}
-              fill="none"
-              stroke={accentColor}
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-
-            {/* Data points */}
-            {data.values.map((v, i) => {
-              const x = CHART_X[i];
-              const y = valueToY(v);
-              const isHighest = v === Math.max(...data.values);
-              const isCurrent = i === data.values.length - 1;
-              return (
-                <g key={i} className="chart-dot" transform={`translate(${x},${y})`}>
-                  <circle
-                    r={isHighest || isCurrent ? 5 : 4}
-                    fill={isHighest ? '#f59e0b' : accentColor}
-                    stroke="#fff"
-                    strokeWidth="2"
-                  />
-                  <text
-                    y="-9"
-                    textAnchor="middle"
-                    fontSize="9"
-                    fontWeight={isHighest || isCurrent ? '700' : '600'}
-                    fill={isHighest ? '#b45309' : '#475569'}
-                    fontFamily="Inter"
-                  >
-                    {v}%
-                  </text>
-                </g>
-              );
-            })}
-
-            {/* X-axis labels */}
-            {data.months.map((m, i) => (
-              <text
-                key={m}
-                x={CHART_X[i]}
-                y="172"
-                textAnchor="middle"
-                fontSize="9.5"
-                fill={i === data.months.length - 1 ? accentColor : '#94a3b8'}
-                fontWeight={i === data.months.length - 1 ? '700' : '500'}
-                fontFamily="Inter"
-              >
-                {m}{i === data.months.length - 1 ? ' ▴' : ''}
-              </text>
-            ))}
-
-            {/* Benchmark line at 95% */}
-            <line
-              x1="50" x2="540"
-              y1={valueToY(95)}
-              y2={valueToY(95)}
-              stroke={accentLight}
-              strokeWidth="1"
-              strokeDasharray="5 3"
-            />
-            <text x="544" y={valueToY(95) + 4} fontSize="8" fill={accentColor} fontFamily="Inter">
-              95%
+          {/* X Axis Labels */}
+          {labels.map((lbl, i) => (
+            <text
+              key={lbl + i}
+              x={chartX[i]}
+              y="192"
+              textAnchor="middle"
+              fontSize="11.5"
+              fontWeight="600"
+              fill="#94A3B8"
+              fontFamily="Nunito Sans, sans-serif"
+            >
+              {lbl}
             </text>
-          </svg>
-        </div>
+          ))}
 
-        {/* Legend */}
-        <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
-          <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1">
-              <span className="w-3 h-0.5 rounded-full inline-block" style={{ background: accentColor }} />
-              Monthly Rate
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-3 h-0.5 rounded-full inline-block" style={{ background: accentLight }} />
-              Target 95%
-            </span>
+          {/* Interactive hover points & indicators */}
+          {labels.map((_, i) => {
+            const x = chartX[i];
+            const yStaff = valToY(staffVals[i]);
+            const yStudent = valToY(studentVals[i]);
+            const isHovered = hoverIndex === i;
+
+            return (
+              <g key={i} onMouseEnter={() => setHoverIndex(i)} onMouseLeave={() => setHoverIndex(null)}>
+                {/* Invisible hover trigger column */}
+                <rect
+                  x={x - (chartX[1] - chartX[0]) / 2}
+                  y="15"
+                  width={chartX[1] - chartX[0]}
+                  height="165"
+                  fill="transparent"
+                  className="cursor-pointer"
+                />
+
+                {isHovered && (
+                  <line
+                    x1={x}
+                    y1="25"
+                    x2={x}
+                    y2="175"
+                    stroke="#CBD5E1"
+                    strokeWidth="1.5"
+                    strokeDasharray="4 3"
+                  />
+                )}
+
+                {/* Staff point */}
+                <circle
+                  cx={x}
+                  cy={yStaff}
+                  r={isHovered ? 6 : 4}
+                  fill="#F59E0B"
+                  stroke="#FFFFFF"
+                  strokeWidth="2.5"
+                  className="transition-all duration-150"
+                />
+
+                {/* Student point */}
+                <circle
+                  cx={x}
+                  cy={yStudent}
+                  r={isHovered ? 6 : 4}
+                  fill="#3B82F6"
+                  stroke="#FFFFFF"
+                  strokeWidth="2.5"
+                  className="transition-all duration-150"
+                />
+              </g>
+            );
+          })}
+        </svg>
+
+        {/* Hover Tooltip Card */}
+        {hoverIndex !== null && (
+          <div
+            className="absolute bg-slate-900/90 text-white px-3 py-2 rounded-xl text-xs shadow-xl pointer-events-none transform -translate-x-1/2 -translate-y-full mb-3 z-30 border border-slate-700 font-sans"
+            style={{
+              left: `${(chartX[hoverIndex] / 580) * 100}%`,
+              top: `${(Math.min(valToY(staffVals[hoverIndex]), valToY(studentVals[hoverIndex])) / 200) * 100}%`,
+            }}
+          >
+            <div className="font-bold text-slate-300 pb-1 border-b border-slate-700/60 mb-1">
+              {labels[hoverIndex]}
+            </div>
+            <div className="flex items-center justify-between gap-3 text-[11px]">
+              <span className="text-amber-400 font-medium">Staff:</span>
+              <span className="font-bold">{staffVals[hoverIndex]}%</span>
+            </div>
+            <div className="flex items-center justify-between gap-3 text-[11px]">
+              <span className="text-blue-400 font-medium">Students:</span>
+              <span className="font-bold">{studentVals[hoverIndex]}%</span>
+            </div>
           </div>
-          <a href="#attendance" className="text-sky-600 font-medium hover:underline text-[11px]">
-            Full roster →
-          </a>
-        </div>
+        )}
       </div>
     </section>
   );
