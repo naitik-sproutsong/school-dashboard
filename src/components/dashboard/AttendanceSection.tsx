@@ -68,7 +68,7 @@ export default function AttendanceSection() {
   const staffAvg = (staffVals.reduce((a, b) => a + b, 0) / staffVals.length).toFixed(1);
 
   return (
-    <section className="bg-white rounded-[22px] p-6 border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.03)]">
+    <section className="bg-white rounded-[22px] p-6 border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.03)] overflow-hidden">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-4">
         <div>
@@ -103,10 +103,10 @@ export default function AttendanceSection() {
       </div>
 
       {/* SVG Chart Container */}
-      <div className="relative w-full h-56 sm:h-64 select-none">
+      <div className="relative w-full h-56 sm:h-64 select-none overflow-hidden">
         <svg
           viewBox="0 0 580 200"
-          className="w-full h-full overflow-visible"
+          className="w-full h-full"
           preserveAspectRatio="none"
         >
           <defs>
