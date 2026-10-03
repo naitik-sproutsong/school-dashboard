@@ -1,9 +1,9 @@
 # School Administration Dashboard
 
 An interactive, responsive dashboard built for a school **Principal / Administrator** to understand the current state of their institution at a glance and quickly identify anything that requires attention.
+[Demo Video]([https://your-project.vercel.app](https://drive.google.com/file/d/18YvCwbP9HEzya5tJj5htkdCa49Ju5Gpt/view?usp=drive_link))
 
 > Built as part of the **SproutSong 3-Day Trainee Exercise (1–3 October 2026)**.
-> [Demo Video]([https://your-project.vercel.app](https://drive.google.com/file/d/18YvCwbP9HEzya5tJj5htkdCa49Ju5Gpt/view?usp=drive_link))
 ---
 
 ## Getting Started
